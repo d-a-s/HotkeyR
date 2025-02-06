@@ -1,20 +1,15 @@
 #include <Gdip_All>
 #include <SaveHICONtoFile>
 
-
-
-
 if 0
 {
   ptr := A_PtrSize = 8 ? "ptr" : "uint"   ;for AHK Basic
   FileName := A_WinDir "\notepad.exe"
   hIcon := DllCall("Shell32\ExtractAssociatedIcon" (A_IsUnicode ? "W" : "A")
-   , ptr, DllCall("GetModuleHandle", ptr, 0, ptr)
-   , str, FileName
-   , "ushort*", lpiIcon
-   , ptr)   ;only supports 32x32
-
-
+    , ptr, DllCall("GetModuleHandle", ptr, 0, ptr)
+    , str, FileName
+    , "ushort*", lpiIcon
+    , ptr)   ;only supports 32x32
 
   ; Gui, Margin, 20, 20
   ; Gui, Add, Text, w64 h64 hwndmypic1 0x3
@@ -23,21 +18,9 @@ if 0
   ; Gui, Show
   SavehIconAsBMP(hIcon, "123.png")
 
-
   WinGet, active_id, ID, A
   SaveWindowIcon(active_id, "1234.png")
 }
-
-
-
-
-
-
-
-
-
-
-
 
 SaveWindowIcon(hwnd, fileName)
 {
@@ -58,16 +41,13 @@ SavehIconAsBMP(hIcon, sFile) {
   return false
 }
 
-
 Get_Window_Icon(wid, Use_Large_Icons_Current) ; (window id, whether to get large icons)
 {
   ; Local NR_temp, h_icon
   ; Window_Found_Count += 1
-  
 
   GetClassLong_API := A_PtrSize = 8 ? "GetClassLongPtr" : "GetClassLong"
-  
-  
+
   ; check status of window - if window is responding or "Not Responding"
   NR_temp := 0 ; init
   h_icon =
@@ -107,17 +87,17 @@ Get_Window_Icon(wid, Use_Large_Icons_Current) ; (window id, whether to get large
           {
             h_icon := DllCall( GetClassLong_API, "uint", wid, "int", -34 ) ; GCL_HICONSM is -34
             If ( ! h_icon )
-            h_icon := DllCall( "LoadIcon", "uint", 0, "uint", 32512 ) ; IDI_APPLICATION is 32512
+              h_icon := DllCall( "LoadIcon", "uint", 0, "uint", 32512 ) ; IDI_APPLICATION is 32512
           }
         }
       }
     }
-  }  
-  
+  }
+
   return h_icon
-  
+
   If ! ( h_icon = "" or h_icon = "FAIL") ; Add the HICON directly to the icon list
-  Gui_Icon_Number := DllCall("ImageList_ReplaceIcon", UInt, ImageListID1, Int, -1, UInt, h_icon)
+    Gui_Icon_Number := DllCall("ImageList_ReplaceIcon", UInt, ImageListID1, Int, -1, UInt, h_icon)
   Else	; use a generic icon
-  Gui_Icon_Number := IL_Add(ImageListID1, "shell32.dll" , 3)
+    Gui_Icon_Number := IL_Add(ImageListID1, "shell32.dll" , 3)
 }

@@ -4,7 +4,7 @@ Decimal_to_Hex(var) {
   SetFormat, integer, d
   return var
 }
-  
+
 GetCPA_file_name( p_hw_target ) ; retrives Control Panel applet icon
 {
   WinGet, pid_target, PID, ahk_id %p_hw_target%
@@ -40,18 +40,16 @@ GetCPA_file_name( p_hw_target ) ; retrives Control Panel applet icon
 getWindowList()
 {
 
-    WS_EX_CONTROLPARENT =0x10000
-    WS_EX_DLGMODALFRAME =0x1
-    WS_CLIPCHILDREN =0x2000000
-    WS_EX_APPWINDOW =0x40000
-    WS_EX_TOOLWINDOW =0x80
-    WS_DISABLED =0x8000000
-    WS_VSCROLL =0x200000
-    WS_POPUP =0x80000000
-
+  WS_EX_CONTROLPARENT =0x10000
+  WS_EX_DLGMODALFRAME =0x1
+  WS_CLIPCHILDREN =0x2000000
+  WS_EX_APPWINDOW =0x40000
+  WS_EX_TOOLWINDOW =0x80
+  WS_DISABLED =0x8000000
+  WS_VSCROLL =0x200000
+  WS_POPUP =0x80000000
 
   winInfoList := []
-  
 
   if PID_Filter !=
   {
@@ -69,7 +67,7 @@ getWindowList()
   {
     ;TODO: filter according to process name
     wid := Window_List%A_Index%
-    
+
     WinGetTitle, wid_Title, ahk_id %wid%
 
     If ((Style & WS_DISABLED) or ! (wid_Title)) ; skip unimportant windows ; ! wid_Title or
@@ -77,36 +75,36 @@ getWindowList()
 
     WinGet, es, ExStyle, ahk_id %wid%
     WinGetClass, cla, ahk_id %wid%
-    
+
     ; ROSS
     if (cla == "Windows.UI.Core.CoreWindow") {
-        continue
+      continue
     }
-    
+
     Parent := Decimal_to_Hex( DllCall( "GetParent", "uint", wid ) )
     If ((es & WS_EX_TOOLWINDOW)  and !(Parent)) or (es =0x00200008) ; filters out program manager, etc
       continue
-    
+
     WinGet, Style_parent, Style, ahk_id %Parent%
     Owner := Decimal_to_Hex( DllCall( "GetWindow", "uint", wid , "uint", "4" ) ) ; GW_OWNER = 4
     WinGet, Style_Owner, Style, ahk_id %Owner%
     If (!( es & WS_EX_APPWINDOW ))
-    {      
+    {
       ; NOTE - some windows result in blank value so must test for zero instead of using NOT operator!
-      If ((Parent) and ((Style_parent & WS_DISABLED) =0)) ; filter out windows that have a parent 
+      If ((Parent) and ((Style_parent & WS_DISABLED) =0)) ; filter out windows that have a parent
         continue
       If ((Owner) and ((Style_Owner & WS_DISABLED) =0))  ; filter out owner window that is NOT disabled -
         continue
 
       ; This filter's logic is copy from the internet, I don't know the detail.
-      If ( Owner or ( es & WS_EX_TOOLWINDOW )) 
+      If ( Owner or ( es & WS_EX_TOOLWINDOW ))
       {
         WinGetClass, Win_Class, ahk_id %wid%
         If ( ! ( Win_Class ="#32770" ) )
           Continue
       }
     }
-    
+
     WinGet, Exe_Name, ProcessName, ahk_id %wid%
     WinGetClass, Win_Class, ahk_id %wid%
     hw_popup := Decimal_to_Hex(DllCall("GetLastActivePopup", "uint", wid))
@@ -122,7 +120,7 @@ getWindowList()
         Loop, %Group_Active_0% ; check current window id against the list to filter
         {
           Loop_Item := Group_Active_%A_Index%
-            StringLeft, Exclude_Item, Loop_Item, 1
+          StringLeft, Exclude_Item, Loop_Item, 1
           If Exclude_Item =! ; remove ! for matching strings
             StringTrimLeft, Loop_Item, Loop_Item, 1
           If ((Loop_Item = Exe_Name) or InStr(wid_Title, Loop_Item)) ; match exe name, title
@@ -138,10 +136,6 @@ getWindowList()
       }
     }
 
-    
-    
-    
-    
     ; Dialog =0 ; init/reset
     ; If (Parent and ! Style_parent)
     ;   CPA_file_name := GetCPA_file_name( wid ) ; check if it's a control panel window
@@ -149,8 +143,7 @@ getWindowList()
     ;   CPA_file_name =
     ;   If (CPA_file_name or (Win_Class ="#32770") or ((style & WS_POPUP) and (es & WS_EX_DLGMODALFRAME)))
     ;     Dialog =1 ; found a Dialog window
-      
-      
+
     ;  If (CPA_file_name)
     ;  {
     ;    Window_Found_Count += 1
@@ -158,71 +151,59 @@ getWindowList()
     ;  }
     ;  Else
     ;    Get_Window_Icon(wid, Use_Large_Icons_Current) ; (window id, whether to get large icons)
-      
-      
-      
-      
-      ; Window__Store_attributes(Window_Found_Count, wid, "") ; Index, wid, parent (or blank if none)
-      
-      
-      
-      ; wid_Title
-      ; hw_popup
-      ; ID_Parent
-      ; Dialog  ; 1 if found a Dialog window, else 0
-    
 
-      WinGet, Exe_Name, ProcessName, ahk_id %wid% ; store processes to a list
-      WinGet, PID, PID, ahk_id %wid% ; store pid's to a list
-      
-      WinGet, State_temp, MinMax, ahk_id %wid%
-      If State_temp =1
-        winState =Max
-      Else If State_temp =-1
-        winState =Min
-      Else If State_temp =0
-        winState =
-      WinGet, es_hw_popup, ExStyle, ahk_id %hw_popup% ; eg to detect on top status of zoomplayer window
-      If ((es & 0x8) or (es_hw_popup & 0x8))  ; 0x8 is WS_EX_TOPMOST.
-      {
-        OnTop =Top
-        OnTop_Found =1
-      }
-      Else
-        OnTop =
+    ; Window__Store_attributes(Window_Found_Count, wid, "") ; Index, wid, parent (or blank if none)
 
-      If Responding
-        Status =
-      Else
-      {
-        Status =Not Responding
-        Status_Found =1
-      }
-      
-      
-      
-      
-      winInfo := {}
-      
-      winInfo.hwnd := wid
-      winInfo.index := Window_Found_Count
-      winInfo.title := wid_Title
-      winInfo.processName := Exe_Name
-      winInfo.state := winState
-      winInfo.onTop := OnTop
-      winInfo.status := Status
-      winInfo.isActive := WinActive("ahk_id" wid)
-      
-      
-      ; a := "Icon" . Window_Found_Count . "|"  . "" . "|"  . Window_Found_Count . "|"  . wid_Title . "|"  . Exe_Name . "|"  . winState . "|"  . OnTop . "|"  . Status
+    ; wid_Title
+    ; hw_popup
+    ; ID_Parent
+    ; Dialog  ; 1 if found a Dialog window, else 0
 
-      
-      winInfoList.Push(winInfo)
+    WinGet, Exe_Name, ProcessName, ahk_id %wid% ; store processes to a list
+    WinGet, PID, PID, ahk_id %wid% ; store pid's to a list
+
+    WinGet, State_temp, MinMax, ahk_id %wid%
+    If State_temp =1
+      winState =Max
+    Else If State_temp =-1
+      winState =Min
+    Else If State_temp =0
+      winState =
+    WinGet, es_hw_popup, ExStyle, ahk_id %hw_popup% ; eg to detect on top status of zoomplayer window
+    If ((es & 0x8) or (es_hw_popup & 0x8))  ; 0x8 is WS_EX_TOPMOST.
+    {
+      OnTop =Top
+      OnTop_Found =1
+    }
+    Else
+      OnTop =
+
+    If Responding
+      Status =
+    Else
+    {
+      Status =Not Responding
+      Status_Found =1
+    }
+
+    winInfo := {}
+
+    winInfo.hwnd := wid
+    winInfo.index := Window_Found_Count
+    winInfo.title := wid_Title
+    winInfo.processName := Exe_Name
+    winInfo.state := winState
+    winInfo.onTop := OnTop
+    winInfo.status := Status
+    winInfo.isActive := WinActive("ahk_id" wid)
+
+    ; a := "Icon" . Window_Found_Count . "|"  . "" . "|"  . Window_Found_Count . "|"  . wid_Title . "|"  . Exe_Name . "|"  . winState . "|"  . OnTop . "|"  . Status
+
+    winInfoList.Push(winInfo)
   }
- 
+
   return winInfoList
 }
-
 
 ; a := getWindowList()
 ; for k, v in a
