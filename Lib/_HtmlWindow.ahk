@@ -1,4 +1,3 @@
-#include <_WindowFader>
 
 
 hw_width := 500
@@ -18,7 +17,6 @@ hw_init()
     global hw_height
     global hw_url
     global GuiHwnd
-    global g_fader
     
     Gui, g_htmlWindow: New
     Gui, g_htmlWindow: Default
@@ -26,8 +24,8 @@ hw_init()
 
     Gui +AlwaysOnTop -SysMenu -Caption +HwndGuiHwnd +LastFound -DPIScale
     ; Gui +Disabled  ; Prevents the user from interacting
-    WinSet, ExStyle, +0x08000000  ; WS_EX_NOACTIVATE
-    WinSet, Transparent, 0, ahk_id %GuiHwnd%
+    ; WinSet, ExStyle, +0x08000000  ; WS_EX_NOACTIVATE
+    ; WinSet, Transparent, 0, ahk_id %GuiHwnd%
     
     
     Gui, Add, ActiveX, vg_webBrowser hwndg_hwndWebBrowser x0 y0 w%hw_width% h%hw_height%, Shell.Explorer ; The final parameter is the name of the ActiveX component.
@@ -42,9 +40,6 @@ hw_init()
     g_webBrowser.Navigate(hw_url)
     
     g_webBrowser.document.parentWindow.AHK := Func("JS_AHK")
-    
-    g_fader := new WindowFader(GuiHwnd)
-    
     
     
     ; Disable navigation sounds
@@ -169,7 +164,6 @@ hw_show()
     global hw_height
     global GuiHwnd
     global g_winAlpha
-    global g_fader
     
     ; Wait for IE to load the page, before we connect the event handlers
     ; g_htmlStr := htmlStr
@@ -184,8 +178,8 @@ hw_show()
     
     Gui, g_htmlWindow:Show, w%hw_width% h%hw_height% NoActivate Hide xCenter yCenter
     
-    
-    g_fader.fadeIn()
+    WinShow, % "ahk_id " GuiHwnd
+    WinActivate, % "ahk_id " GuiHwnd
 }
 
 hw_isReady()
@@ -202,9 +196,9 @@ hw_isReady()
 
 hw_hide()
 {
-    global g_fader
+    global GuiHwnd
     
-    g_fader.fadeOut()
+    WinHide, % "ahk_id " GuiHwnd
     
     ; Gui, g_htmlWindow:Hide
 }

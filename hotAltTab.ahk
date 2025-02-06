@@ -1,44 +1,40 @@
 ﻿#SingleInstance, Force
+if not A_IsAdmin
+{
+  Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
+  ExitApp
+}
+
 ;#NoTrayIcon
 #Persistent  ; Keep the script running
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability
 
-#include <Optimize>
 #include <SerDes>
-#include <RunAsAdmin>
 
 #include <_HtmlWindow>
 #include <_ShellRunEx>
 #include <_GetWindowList>
 #include <_GetWindowIcon>
 
-RunAsAdmin()
-
-; Thread, interrupt, 0  ; IMPORTANT: Make all threads always-interruptible
-
 SetWorkingDir %A_ScriptDir%
-SetCapsLockState, AlwaysOff
 
-BEEP_FILE = %A_ScriptDir%\Resources\Beep.wav
-APP_NAME = HotkeyR
-TEMP_FOLDER = %A_Temp%\HotkeyR
+g_appName := "HotkeyR"
+g_tempFolder := A_Temp "\" g_appName
 
-FileCreateDir % TEMP_FOLDER
-FileDelete %TEMP_FOLDER%\*.ico
-
-; msgbox % TEMP_FOLDER
+FileCreateDir, % g_tempFolder
+FileDelete, %g_tempFolder%\*.ico
 
 g_lastActivatedHwnd := {}
 g_hotkeyProgramMap := {}
 g_iconCache := {}
 g_altPressed := false
-g_winShown := false
 g_index := 0
 
 log(txt) {
-  global TEMP_FOLDER
-  logfile := TEMP_FOLDER "\log.txt"
+  ; global g_tempFolder
+  ; logfile := g_tempFolder "\log.txt"
+  logfile := "log.txt"
   FormatTime, currentTime,, yyyy-MM-dd HH:mm:ss
   logTxt := currentTime ": " txt
   FileAppend, %logTxt% `n, %logfile%
@@ -117,6 +113,18 @@ updateUI(hwnd) {
   ;g_webBrowser.document.getElementById("tr_" hwnd).className := "activeWindow"
 }
 
+isTargetWindowActive() {
+  global GuiHwnd
+  id := "ahk_id " GuiHwnd
+  WinGet, isVisible, MinMax, %id%
+  if (isVisible = 0){
+    log(id " - exists, visible " isVisible)
+    return true
+  }
+  log(id " - not exist " isVisible)
+  return false
+}
+
 ^!r::
   Suspend Permit
   Reload
@@ -129,10 +137,9 @@ return
 return
 
 ~Alt Up::
-  if(g_winShown) {
-    g_winShown := false
+  if(1 or isTargetWindowActive()) {
     hw_hide()
-    if(g_index>1){
+    if(g_index>=1){
       activateIndex(g_index)
     }
   }
@@ -141,16 +148,26 @@ return
 !Tab::paint_list(1)
 !+Tab::paint_list(-1)
 
+#If isTargetWindowActive()
+  !1::changeIndex(0,0)
+  !2::changeIndex(0,1)
+  !3::changeIndex(0,2)
+  !4::changeIndex(0,3)
+  !5::changeIndex(0,4)
+  !6::changeIndex(0,5)
+  !7::changeIndex(0,6)
+  !8::changeIndex(0,7)
+  !9::changeIndex(0,8)
+#If
+
 paint_list(offset)
 {
   global g_index
   global g_winList
   global g_webBrowser
   global g_iconCache
-  global TEMP_FOLDER
-  global g_winShown
-
-  if (!g_winShown) {
+  global g_tempFolder
+  if (!isTargetWindowActive()) {
 
     while ( not hw_isReady() ) {
       sleep 50
@@ -163,40 +180,44 @@ paint_list(offset)
     updateTbody()
 
     sleep 10
+    hw_height := g_webBrowser.document.body.offsetHeight
+    if (hw_height > 600) {
+      hw_height := 600
+    }
+    hw_height := 600
+
     hw_show()
 
     for i, v in g_winList
     {
-      ;if (not g_winShown) break
-
       if g_iconCache.HasKey(v.hwnd)
         continue
 
       iconFile := "icon_" . v.hwnd . ".ico"
-      iconPath := TEMP_FOLDER . "\" . iconFile
-      ;log(iconFile . " | " . i . " | " . v.hwnd)
+      iconPath := g_tempFolder . "\" . iconFile
+      ; log(iconPath . " | " . i . " | " . v.hwnd)
       SaveWindowIcon( v.hwnd, iconPath)
       g_webBrowser.document.getElementById("icon_" v.hwnd).src := iconPath
       g_iconCache[v.hwnd] := iconPath
     }
-
-    ; if (!g_webBrowser.CoreWebView2){
-    ;   g_webBrowser.EnsureCoreWebView2Async()
-    ; }
-
-    ; while ( not g_webBrowser.CoreWebView2 ) {
-    ;   log("waiting for g_webBrowser.CoreWebView2")
-    ;   sleep 100
-    ; }
-    ; webView.CoreWebView2.OpenDevToolsWindow()
+    log("paint list win-create end")
   }
-  g_winShown := true
 
+  changeIndex(offset)
+}
+
+changeIndex(offset, abs:=false) {
+  global g_index
+  global g_winList
   winCnt := g_winList.Count()
   ;log("index old: " g_index " | " offset " | " winCnt)
   if (!g_index)
     g_index := 0
-  g_index := g_index+offset
+  if(abs ~= "^\d+$" and abs > 0){
+    g_index := abs + offset
+  } else {
+    g_index := g_index+offset
+  }
   if(g_index < 0)
     g_index:= winCnt-1
   if(g_index > winCnt)
@@ -206,22 +227,6 @@ paint_list(offset)
   updateUI(false)
 }
 return
-
-; XXX
-; https://gist.github.com/be5invis/6571037
-scrollPage(delta)
-{
-  global GuiHwnd
-
-  ControlGet, hwndTopControl, Hwnd,,, ahk_id %GuiHwnd%
-
-  WHEEL_DELTA := (120 << 16) * delta
-  WinGetPos, x, y, width, height, ahk_id %GuiHwnd%
-  mX := x + width / 2
-  mY := y + height / 2
-
-  PostMessage, 0x20A, WHEEL_DELTA, (mY << 16) | mX,,% "ahk_id " hwndTopControl
-}
 
 exitApp()
 {
@@ -256,7 +261,7 @@ updateTbody() {
   global g_winList
   global g_iconCache
   global g_webBrowser
-  global TEMP_FOLDER
+  global g_tempFolder
 
   ; Update web page
   tbody =
@@ -274,7 +279,7 @@ updateTbody() {
     title := v.title
     toggleTopColor := v.onTop ? "red lighten-2" : "grey lighten-3"
     if g_iconCache.HasKey(hwnd)
-      iconSrc = %TEMP_FOLDER%\icon_%hwnd%.ico
+      iconSrc = %g_tempFolder%\icon_%hwnd%.ico
     else
       iconSrc = images/loading-spinner-grey.gif
     activeWindow := v.isActive ? "activeWindow" : ""
@@ -283,7 +288,7 @@ updateTbody() {
     (
       <tr id="tr_%hwnd%" %ows% class="%activeWindow%">
         <td><img class="icon" id="icon_%hwnd%" src="%iconSrc%"></td>
-        <td><span class="key">%key%</span></td>
+        <td><span class="key">%i%</span></td>
         <td>%processName%</td>
         <td class="winTitle">%title%</td>
         <td><a class="topmost-btn btn-flat %toggleTopColor%"
@@ -299,9 +304,4 @@ updateTbody() {
   g_webBrowser.document.getElementById("tbody").innerHTML := tbody
 }
 
-onTimer() {
-  global GuiHwnd
-
-  ; Reset AlwaysOnTop to keep HotkeyR front most
-  WinSet, AlwaysOnTop, On, ahk_id %GuiHwnd%
-}
+#include %A_ScriptDir%\bj\move.ahk
