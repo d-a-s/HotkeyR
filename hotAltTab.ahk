@@ -179,13 +179,7 @@ paint_list(offset)
 
     updateTbody()
 
-    sleep 10
-    hw_height := g_webBrowser.document.body.offsetHeight
-    if (hw_height > 600) {
-      hw_height := 600
-    }
-    hw_height := 600
-
+    changeIndex(offset)
     hw_show()
 
     for i, v in g_winList
@@ -202,8 +196,9 @@ paint_list(offset)
     }
     log("paint list win-create end")
   }
-
-  changeIndex(offset)
+  else {
+    changeIndex(offset)
+  }
 }
 
 changeIndex(offset, abs:=false) {
@@ -235,8 +230,6 @@ exitApp()
 
 aboutApp()
 {
-  SetTimer, onTimer, Off
-
   text =
   ( LTrim
     HotkeyR
