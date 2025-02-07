@@ -19,6 +19,8 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 
 SetWorkingDir %A_ScriptDir%
 
+gvim := "C:\Program Files\Vim\vim91\gvim.exe"
+
 g_appName := "HotkeyR"
 g_tempFolder := A_Temp "\" g_appName
 
@@ -276,4 +278,5 @@ updateTbody() {
   g_webBrowser.document.getElementById("tbody").innerHTML := tbody
 }
 
+#include %A_ScriptDir%\bj\hotkeys.ahk
 #include %A_ScriptDir%\bj\move.ahk
